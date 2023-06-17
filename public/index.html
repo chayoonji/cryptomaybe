@@ -1,116 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Registration Example with RSA Encryption 2</title>
+    <meta charset="UTF-8" />
+    <title>Document</title>
   </head>
   <body>
-    <h1>Registration2</h1>
-    <form id="registration-form">
-      <label for="username">Username:</label>
-      <input type="text" id="username" name="username" required />
-      <br />
-      <label for="password">Password:</label>
-      <input type="password" id="password" name="password" required />
-      <br />
-      <input type="submit" value="Register" />
+    <h3>로그인</h3>
+    <form action="/user/login" method="post">
+      <table>
+        <tr>
+          <td>아이디 :</td>
+          <td><input type="text" name="userId" /></td>
+        </tr>
+        <tr>
+          <td>비밀번호 :</td>
+          <td><input type="password" name="password" /></td>
+        </tr>
+        <tr>
+          <td><input type="submit" value="로그인" /></td>
+        </tr>
+      </table>
     </form>
 
+    <div id="user-info"></div>
+
+    <button id="logout-button" style="display: none">로그아웃</button>
+
     <script>
-            // TODO: Replace with the server's public key
-            let publicKeyPem = `-----BEGIN PUBLIC KEY-----
-      MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDlOJu6TyygqxfWT7eLtGDwajtN
-      FOb9I5XRb6khyfD1Yt3YiCgQWMNW649887VGJiGr/L5i2osbl8C9+WJTeucF+S76
-      xFxdU6jE0NQ+Z+zEdhUTooNRaY5nZiu5PgDB0ED/ZKBUSLKL7eibMxZtMlUDHjm4
-      gwQco1KRMDSmXSMkDwIDAQAB
-      -----END PUBLIC KEY-----`;
-
-            document
-              .querySelector('#registration-form')
-              .addEventListener('submit', async (e) => {
-                e.preventDefault();
-                let username = document.querySelector('#username').value;
-                let password = document.querySelector('#password').value;
-
-                // Import the server's public key
-                let publicKey = await importPublicKey(publicKeyPem);
-
-                // Encrypt the registration data with the server's public key
-                let registrationData = { username, password };
-                let encryptedRegistrationData = await encryptData(
-                  registrationData,
-                  publicKey
-                );
-
-                // Send the encrypted registration data to the server
-                let response = await fetch('/register', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ encryptedRegistrationData }),
-                });
-                let data = await response.json();
-                console.log(data);
-              });
-
-            async function importPublicKey(pem) {
-              // Fetch the ArrayBuffer of the public key
-              let response = await fetch(
-                `data:application/x-pem-file;base64,${btoa(pem)}`
-              );
-              let keyBuffer = await response.arrayBuffer();
-
-              // Import the public key
-              return await window.crypto.subtle.importKey(
-                'spki',
-                keyBuffer,
-                {
-                  name: 'RSA-OAEP',
-                  hash: 'SHA-256',
-                },
-                true,
-                ['encrypt']
-              );
-            }
-
-            async function encryptData(data, publicKey) {
-              // Encode the data as a JSON string
-              let dataString = JSON.stringify(data);
-
-              // Encrypt the data with the public key
-              let encryptedDataBuffer = await window.crypto.subtle.encrypt(
-                {
-                  name: 'RSA-OAEP',
-                },
-                publicKey,
-                new TextEncoder().encode(dataString)
-              );
-
-              // Return the encrypted data as a base64-encoded string
-              return arrayBufferToBase64(encryptedDataBuffer);
-            }
-
-            function arrayBufferToBase64(buffer) {
-              let binary = '';
-              let bytes = new Uint8Array(buffer);
-              for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-              }
-              return window.btoa(binary);
-            }
-            let response = await fetch('/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ encryptedRegistrationData }),
+      const form = document.querySelector('form');
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const userId = document.querySelector('input[name=userId]').value;
+        const password = document.querySelector('input[name=password]').value;
+        if (userId === 'cha' && password === '12345') {
+          const userInfo = document.querySelector('#user-info');
+          userInfo.textContent = `안녕하세요 ${userId}님!`;
+          const logoutButton = document.querySelector('#logout-button');
+          logoutButton.style.display = 'block';
+          setTimeout(() => {
+            alert('로그인 성공!');
+          }, 0);
+        }
       });
-      let data = await response.json();
-      if (data.success) {
-        alert('Registration successful!');
-      } else {
-        alert('Registration failed.');
-      }
+
+      const logoutButton = document.querySelector('#logout-button');
+      logoutButton.addEventListener('click', async () => {
+        const response = await fetch('/user/logout', { method: 'POST' });
+        if (response.ok) {
+          const userInfo = document.querySelector('#user-info');
+          userInfo.textContent = '';
+          setTimeout(() => {
+            alert('로그아웃 되었습니다.');
+            location.reload();
+          }, 0);
+        }
+      });
     </script>
   </body>
 </html>
